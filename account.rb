@@ -60,6 +60,6 @@ puts my_account.balance
 
 puts my_account.owner_info()
 
-# my_info.name = "Dan Roberts" ==> attr_accessor in Owner will allow me to modify
+my_info.name = "Dan Roberts" #==> attr_accessor in Owner will allow me to modify
 
-#puts my_account.owner_info()
+puts my_account.owner_info()
