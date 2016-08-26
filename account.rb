@@ -3,18 +3,21 @@ require 'csv'
 
 module Bank
     class Account
-        attr_reader :account_id, :balance, :owner, :opendate
+        attr_reader :account_id, :balance, :owner, :opendate, :withdrawal_fee
 
-        def initialize(account_id, balance, opendate) #remember to add owner back if i don't use associate_owner method
-            @account_id = account_id #nil
-            @balance = balance #nil
-            @opendate = opendate #nil
+        MIN_BALANCE = 0
 
-            # csv_accounts
-            # @owner = owner
+        def initialize(account_id, balance, opendate)
+            #remember to add owner back if i don't use associate_owner method
 
-            if balance.to_i <= 0
-                raise ArgumentError.new("Your account must have a positive balance!")
+            @account_id = account_id
+            @balance = balance
+            @opendate = opendate
+
+            @withdrawal_fee = 0
+
+            if balance.to_i <= self.class::MIN_BALANCE
+                raise ArgumentError.new("Your account balance can't be below $#{self.class::MIN_BALANCE}!")
             end
         end
 
@@ -24,49 +27,17 @@ module Bank
             puts "Account open date: #{ @opendate }"
         end
 
-        # Wave 2, primary requirement #1
-        # def csv_accounts
-        #     accounts = CSV.read('support/accounts.csv', 'r')
-        #     puts "There are 12 accounts in this list. Please tell me an ordinal number to retrieve account information."
-        #     user_input = gets.chomp.to_i
-        #     index = user_input - 1
-        #     @id = accounts[index][0]
-        #     @balance = accounts[index][1]
-        #     @opendate = accounts[index][2]
-        # end
-
-        #returns a collection of Account instances, representing all of the Accounts described in the CSV. See below for the CSV file specifications
-        def self.all
-            account_list = []
-
-            account_file = CSV.read('support/accounts.csv', 'r')
-            account_file.each do |line|
-                account_list << self.new(line[0].to_i, line[1].to_i, line[2].to_i)
-            end
-
-            return account_list
-        end
-
-        # returns an instance of Account where the value of the id field in the CSV matches the passed parameter
-        def self.find(id)
-            self.all.each do |item|
-                if item.account_id == id
-                    # puts item.account_info()
-                    return item
-                end
-            end
-            puts "Sorry, invalid ID."
-            return nil
-        end
-
         def withdraw(amount)
-            if (@balance - amount) < 0
-                puts "You can't withdraw $#{amount}! Your account balance can't go negative."
+            update_balance = @balance - amount - @withdrawal_fee
+            if update_balance < self.class::MIN_BALANCE
+                puts "You can't withdraw $#{amount}!"
                 puts "Your original balance: $#{@balance}"
                 return @balance
             else
-                @balance = @balance - amount
-                puts "You just withdrew $#{amount}."
+                puts "Your original balance: $#{@balance}"
+                @balance = update_balance
+                puts "You just withdrew $#{amount}"
+                puts "Withdrawal fee: $#{@withdrawal_fee}"
                 puts "Your new balance: $#{@balance}"
                 return @balance
             end
@@ -79,7 +50,7 @@ module Bank
             return @balance
         end
 
-        # Wave 1 optional enhancements has 2 methods below
+        # Wave 1 optional enhancements for Owners
         def associate_owner(owner)
             @owner = owner
             # remember to remove @owner from the initializer if I want to use this method
@@ -87,6 +58,30 @@ module Bank
 
         def owner_info()
             @owner.owner_info() #calling owner_info() method of class Owner
+        end
+
+        # Wave 2: returns a collection of Account instances, representing all of the Accounts described in the CSV. See below for the CSV file specifications
+        def self.all
+            account_list = []
+
+            account_file = CSV.read('support/accounts.csv', 'r')
+            account_file.each do |line|
+                account_list << self.new(line[0].to_i, line[1].to_i, line[2].to_i)
+            end
+
+            return account_list
+        end
+
+        # Wave 2: returns an instance of Account where the value of the id field in the CSV matches the passed parameter
+        def self.find(id)
+            self.all.each do |item|
+                if item.account_id == id
+                    # puts item.account_info()
+                    return item
+                end
+            end
+            puts "Sorry, invalid ID."
+            return nil
         end
 
         # Wave 2 optional enhancements: to create the relationship between the accounts and the owners use the account_owners CSV file
@@ -105,42 +100,3 @@ module Bank
         end
     end
 end
-
-=begin
-
-Wave 1 testing
-
-my_info = Bank::Owner.new('Kelly', 'Sammamish', '12345')
-my_account = Bank::Account.new(2432423, 9800, my_info)
-
-puts my_account.balance
-puts my_account.withdraw(19700)
-puts my_account.withdraw(700)
-puts my_account.deposit(1000)
-
-puts my_account.balance
-
-puts my_account.owner_info()
-
-my_info.name = "Dan Roberts" #==> attr_accessor in Owner will allow me to modify
-
-puts my_account.owner_info()
-
-=end
-
-=begin
-
-Wave 2, primary requirement #1 testing
-
-my_info = Bank::Owner.new('Kelly', 'Sammamish', '12345')
-my_account = Bank::Account.new(my_info)
-
-puts my_account.id
-puts my_account.balance
-puts my_account.opendate
-
-=end
-
-# list_of_account = Bank::Account.all
-#
-# puts list_of_account
